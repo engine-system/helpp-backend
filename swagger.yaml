@@ -1,0 +1,1210 @@
+openapi: 3.0.3
+info:
+  title: Helpp API
+  description: |
+    API do projeto **Helpp** — plataforma de ajuda mútua que conecta pessoas que precisam de ajuda com quem pode ajudar.
+
+    ## Autenticação
+    A maioria dos endpoints protegidos usa **Bearer Token (JWT)**. O access token expira em **15 minutos**.
+    Use `POST /auth/refresh` para renová-lo com o refresh token (validade de 30 dias).
+
+    ## Sistema de Reciprocidade
+    Cada usuário possui um saldo de reciprocidade:
+    - `helpReceived` incrementa quando recebe uma ajuda concluída
+    - `helpGiven` incrementa quando conclui uma ajuda como helper
+    - Se `helpReceived > helpGiven`, o usuário está bloqueado de criar novos pedidos até ajudar alguém
+  version: 1.0.0
+  contact:
+    name: Helpp
+
+servers:
+  - url: http://localhost:3000
+    description: Desenvolvimento local
+
+tags:
+  - name: Health
+  - name: Auth
+  - name: Users
+  - name: Requests
+  - name: Matches
+  - name: Chat
+  - name: Thank You
+  - name: Good Actions
+  - name: Sponsors
+  - name: Sponsor Requests
+  - name: Vent (Desabafar)
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Server error
+
+    AuthTokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+            profileComplete:
+              type: boolean
+
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        nickname:
+          type: string
+        cpfSuffix:
+          type: string
+          description: Últimos 3 dígitos do CPF
+        phoneSuffix:
+          type: string
+          description: Últimos 4 dígitos do telefone
+        city:
+          type: string
+        neighborhood:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        avatar:
+          type: string
+          description: Imagem em base64
+        profileComplete:
+          type: boolean
+        helpReceived:
+          type: integer
+          description: Total de ajudas recebidas
+          default: 0
+        helpGiven:
+          type: integer
+          description: Total de ajudas dadas
+          default: 0
+
+    Request:
+      type: object
+      properties:
+        _id:
+          type: string
+        userId:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/User'
+        category:
+          type: string
+          enum:
+            - Food or Groceries
+            - Medicine
+            - Transportation
+            - Temporary Shelter
+            - Help with Bills
+            - Job Opportunity
+            - School Supplies
+            - Emotional Support
+            - Other
+        reason:
+          type: string
+        urgency:
+          type: string
+          enum: [Low, Medium, High, Emergency]
+        giveBack:
+          type: string
+        status:
+          type: string
+          enum: [pending, matched, completed, cancelled]
+          default: pending
+        latitude:
+          type: number
+        longitude:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    Match:
+      type: object
+      properties:
+        _id:
+          type: string
+        requestId:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/Request'
+        helperId:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/User'
+        offerMessage:
+          type: string
+        status:
+          type: string
+          enum: [pending, active, awaiting_confirmation, completed, cancelled]
+          default: pending
+        proofImage:
+          type: string
+          description: Imagem de comprovante em base64
+        createdAt:
+          type: string
+          format: date-time
+
+    Message:
+      type: object
+      properties:
+        _id:
+          type: string
+        matchId:
+          type: string
+        senderId:
+          type: object
+          properties:
+            _id:
+              type: string
+            name:
+              type: string
+            nickname:
+              type: string
+        text:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ThankYou:
+      type: object
+      properties:
+        _id:
+          type: string
+        fromUserId:
+          type: object
+          properties:
+            _id:
+              type: string
+            name:
+              type: string
+            nickname:
+              type: string
+        toUserId:
+          type: object
+          properties:
+            _id:
+              type: string
+            name:
+              type: string
+            nickname:
+              type: string
+        matchId:
+          type: string
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    GoodAction:
+      type: object
+      properties:
+        _id:
+          type: string
+        userId:
+          type: object
+          properties:
+            _id:
+              type: string
+            name:
+              type: string
+            nickname:
+              type: string
+            city:
+              type: string
+        description:
+          type: string
+        photoUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Sponsor:
+      type: object
+      properties:
+        _id:
+          type: string
+        companyName:
+          type: string
+        cnpj:
+          type: string
+        contactName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        city:
+          type: string
+        supportType:
+          type: string
+        notes:
+          type: string
+        logo:
+          type: string
+          description: Imagem em base64
+
+    SponsorRequest:
+      type: object
+      properties:
+        _id:
+          type: string
+        sponsorId:
+          type: string
+        productId:
+          type: string
+        productName:
+          type: string
+        companyName:
+          type: string
+        userId:
+          type: string
+        userName:
+          type: string
+        userContact:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+          enum: [pending, contacted, resolved]
+          default: pending
+        contactedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    VentQueueEntry:
+      type: object
+      properties:
+        _id:
+          type: string
+        status:
+          type: string
+          enum: [waiting, matched]
+        position:
+          type: integer
+          description: Posição na fila (1 = próximo a ser atendido)
+          example: 3
+
+    ObligationPendingError:
+      type: object
+      properties:
+        code:
+          type: string
+          example: obligation_pending
+        helpReceived:
+          type: integer
+          example: 2
+        helpGiven:
+          type: integer
+          example: 1
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Verifica se o servidor está no ar
+      responses:
+        '200':
+          description: Servidor online
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Cria nova conta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                  example: João Silva
+                email:
+                  type: string
+                  format: email
+                  example: joao@email.com
+                password:
+                  type: string
+                  minLength: 6
+                  example: senha123
+      responses:
+        '201':
+          description: Conta criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokens'
+        '400':
+          description: Campos obrigatórios faltando
+        '409':
+          description: Email já em uso
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Autentica e retorna tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login bem-sucedido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokens'
+        '401':
+          description: Credenciais inválidas
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Renova o access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token renovado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+        '401':
+          description: Refresh token inválido ou expirado
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Busca perfil do usuário
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Perfil do usuário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Usuário não encontrado
+
+    patch:
+      tags: [Users]
+      summary: Atualiza perfil do usuário autenticado
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname:
+                  type: string
+                cpfSuffix:
+                  type: string
+                phoneSuffix:
+                  type: string
+                city:
+                  type: string
+                neighborhood:
+                  type: string
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+                avatar:
+                  type: string
+                  description: Imagem em base64
+      responses:
+        '200':
+          description: Perfil atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '403':
+          description: Acesso negado
+
+  /requests:
+    get:
+      tags: [Requests]
+      summary: Lista pedidos abertos
+      parameters:
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - in: query
+          name: skip
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Lista de pedidos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Request'
+
+    post:
+      tags: [Requests]
+      summary: Cria novo pedido de ajuda
+      description: |
+        Cria um novo pedido. **Bloqueado** se o usuário tiver obrigação pendente (`helpReceived > helpGiven`).
+        Nesse caso retorna `403` com `code: "obligation_pending"`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category, reason, urgency, giveBack]
+              properties:
+                category:
+                  type: string
+                  enum:
+                    - Food or Groceries
+                    - Medicine
+                    - Transportation
+                    - Temporary Shelter
+                    - Help with Bills
+                    - Job Opportunity
+                    - School Supplies
+                    - Emotional Support
+                    - Other
+                reason:
+                  type: string
+                urgency:
+                  type: string
+                  enum: [Low, Medium, High, Emergency]
+                giveBack:
+                  type: string
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+      responses:
+        '201':
+          description: Pedido criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Request'
+        '400':
+          description: Campos obrigatórios faltando
+        '403':
+          description: Obrigação de reciprocidade pendente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObligationPendingError'
+
+  /requests/mine:
+    get:
+      tags: [Requests]
+      summary: Lista pedidos do usuário autenticado (com matches e offers)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Pedidos do usuário com informações de match
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Request'
+                    - type: object
+                      properties:
+                        matchId:
+                          type: string
+                        matchStatus:
+                          type: string
+                        helper:
+                          type: object
+                        offers:
+                          type: array
+                          items:
+                            type: object
+
+  /requests/{id}:
+    get:
+      tags: [Requests]
+      summary: Detalhe de um pedido
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pedido encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Request'
+        '404':
+          description: Pedido não encontrado
+
+    patch:
+      tags: [Requests]
+      summary: Atualiza status do pedido
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [pending, matched, completed, cancelled]
+      responses:
+        '200':
+          description: Status atualizado
+        '403':
+          description: Acesso negado
+        '404':
+          description: Pedido não encontrado
+
+  /matches:
+    get:
+      tags: [Matches]
+      summary: Lista matches com filtros
+      parameters:
+        - in: query
+          name: helperId
+          schema:
+            type: string
+        - in: query
+          name: requestId
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, active, awaiting_confirmation, completed, cancelled]
+      responses:
+        '200':
+          description: Lista de matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Match'
+
+    post:
+      tags: [Matches]
+      summary: Helper envia oferta de ajuda
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [requestId]
+              properties:
+                requestId:
+                  type: string
+                offerMessage:
+                  type: string
+      responses:
+        '201':
+          description: Oferta criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Match'
+        '409':
+          description: Pedido já tem helper ativo ou oferta duplicada
+
+  /matches/mine:
+    get:
+      tags: [Matches]
+      summary: Lista matches do helper autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Matches do helper
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Match'
+
+  /matches/{id}:
+    patch:
+      tags: [Matches]
+      summary: Atualiza status do match
+      description: |
+        **Transições válidas:**
+        - Receptor aceita oferta: `pending → active`
+        - Receptor recusa oferta: `pending → cancelled`
+        - Helper cancela match ativo: `active → cancelled`
+        - Helper sinaliza conclusão: `active → awaiting_confirmation`
+        - Helper reverte sinalização: `awaiting_confirmation → active`
+        - Receptor confirma ajuda recebida: `active|awaiting_confirmation → completed` *(incrementa helpReceived/helpGiven)*
+        - Helper marca diretamente como concluído: `active → completed` *(incrementa helpReceived/helpGiven)*
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [pending, active, awaiting_confirmation, completed, cancelled]
+                proofImage:
+                  type: string
+                  description: Base64 (opcional, usado na conclusão)
+      responses:
+        '200':
+          description: Status atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Match'
+        '400':
+          description: Transição de status inválida
+        '403':
+          description: Acesso negado
+        '404':
+          description: Match não encontrado
+
+  /matches/{id}/proof:
+    patch:
+      tags: [Matches]
+      summary: Atualiza foto de comprovante
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                proofImage:
+                  type: string
+                  nullable: true
+                  description: Base64 da imagem ou null para remover
+      responses:
+        '200':
+          description: Comprovante atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  proofImage:
+                    type: string
+                    nullable: true
+
+  /chat/{matchId}:
+    get:
+      tags: [Chat]
+      summary: Busca mensagens de um match
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: matchId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Mensagens do match em ordem cronológica
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        '403':
+          description: Usuário não é participante do match
+        '404':
+          description: Match não encontrado
+
+    post:
+      tags: [Chat]
+      summary: Envia mensagem no chat do match
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: matchId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+      responses:
+        '201':
+          description: Mensagem enviada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '403':
+          description: Usuário não é participante do match
+
+  /thank-you:
+    get:
+      tags: [Thank You]
+      summary: Lista agradecimentos públicos
+      responses:
+        '200':
+          description: Lista de agradecimentos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ThankYou'
+
+    post:
+      tags: [Thank You]
+      summary: Cria agradecimento
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [toUserId, matchId, message]
+              properties:
+                toUserId:
+                  type: string
+                matchId:
+                  type: string
+                message:
+                  type: string
+      responses:
+        '201':
+          description: Agradecimento criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThankYou'
+
+  /good-actions:
+    get:
+      tags: [Good Actions]
+      summary: Lista boas ações registradas
+      responses:
+        '200':
+          description: Lista de boas ações
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GoodAction'
+
+    post:
+      tags: [Good Actions]
+      summary: Registra uma boa ação
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [description]
+              properties:
+                description:
+                  type: string
+                photoUrl:
+                  type: string
+      responses:
+        '201':
+          description: Boa ação registrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoodAction'
+
+  /sponsors:
+    get:
+      tags: [Sponsors]
+      summary: Lista todos os apoiadores
+      responses:
+        '200':
+          description: Lista de apoiadores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sponsor'
+
+    post:
+      tags: [Sponsors]
+      summary: Cadastra novo apoiador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [companyName, cnpj, contactName, email, city]
+              properties:
+                companyName:
+                  type: string
+                cnpj:
+                  type: string
+                contactName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                city:
+                  type: string
+                supportType:
+                  type: string
+                notes:
+                  type: string
+                logo:
+                  type: string
+                  description: Imagem em base64
+      responses:
+        '201':
+          description: Apoiador cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sponsor'
+        '409':
+          description: CNPJ já cadastrado
+
+  /sponsors/{id}:
+    get:
+      tags: [Sponsors]
+      summary: Busca apoiador por ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Apoiador encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sponsor'
+        '404':
+          description: Apoiador não encontrado
+
+  /sponsors/{id}/logo:
+    patch:
+      tags: [Sponsors]
+      summary: Atualiza logo do apoiador
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                logo:
+                  type: string
+                  nullable: true
+                  description: Base64 ou null para remover
+      responses:
+        '200':
+          description: Logo atualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logo:
+                    type: string
+                    nullable: true
+
+  /sponsor-requests:
+    get:
+      tags: [Sponsor Requests]
+      summary: Lista requisições de apoio (filtros por sponsorId ou userId)
+      parameters:
+        - in: query
+          name: sponsorId
+          schema:
+            type: string
+        - in: query
+          name: userId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de requisições
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SponsorRequest'
+
+    post:
+      tags: [Sponsor Requests]
+      summary: Cria requisição de apoio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sponsorId, productId, productName, userName, userContact]
+              properties:
+                sponsorId:
+                  type: string
+                productId:
+                  type: string
+                productName:
+                  type: string
+                companyName:
+                  type: string
+                userId:
+                  type: string
+                userName:
+                  type: string
+                userContact:
+                  type: string
+                message:
+                  type: string
+      responses:
+        '201':
+          description: Requisição criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SponsorRequest'
+
+  /sponsor-requests/{id}/status:
+    patch:
+      tags: [Sponsor Requests]
+      summary: Atualiza status da requisição
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [pending, contacted, resolved]
+      responses:
+        '200':
+          description: Status atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SponsorRequest'
+        '404':
+          description: Requisição não encontrada
+
+  /vent/queue:
+    post:
+      tags: [Vent (Desabafar)]
+      summary: Entra na fila de espera (ou retorna posição se já estiver)
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Entrada na fila criada ou existente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VentQueueEntry'
+
+    delete:
+      tags: [Vent (Desabafar)]
+      summary: Sai da fila de espera
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Saiu da fila com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Left queue
+
+  /vent/queue/me:
+    get:
+      tags: [Vent (Desabafar)]
+      summary: Consulta posição atual na fila
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Posição na fila
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VentQueueEntry'
+        '404':
+          description: Usuário não está na fila

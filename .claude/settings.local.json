@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx @nestjs/cli:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout:*)",
+      "Bash(node -e:*)",
+      "Bash(npm test:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npx jest:*)",
+      "WebSearch",
+      "WebFetch(domain:www.prisma.io)",
+      "Bash(node --experimental-vm-modules node_modules/.bin/jest:*)",
+      "Bash(set:*)",
+      "Bash(npx cross-env:*)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}
