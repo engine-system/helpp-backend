@@ -43,6 +43,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+const { version, name } = require('./package.json');
+app.get('/version', (req, res) => {
+  res.json({ name, version, node: process.version, env: process.env.NODE_ENV || 'development' });
+});
+
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/requests', requestRoutes);

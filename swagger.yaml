@@ -356,6 +356,31 @@ paths:
                     type: string
                     format: date-time
 
+  /version:
+    get:
+      tags: [Health]
+      summary: Versão da API em execução
+      responses:
+        '200':
+          description: Informações da versão atual
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: helpp-backend
+                  version:
+                    type: string
+                    example: 1.0.0
+                  node:
+                    type: string
+                    example: v20.11.0
+                  env:
+                    type: string
+                    example: development
+
   /auth/register:
     post:
       tags: [Auth]
