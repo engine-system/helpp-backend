@@ -34,3 +34,21 @@ Acesse a documentação interativa (Swagger UI) em:
 ```
 http://localhost:3000/docs
 ```
+
+## Endpoints utilitários
+
+| Método | URL | Descrição |
+|--------|-----|-----------|
+| GET | `/health` | Verifica se o servidor está no ar |
+| GET | `/version` | Retorna a versão exata da API em execução |
+
+Exemplo de resposta do `/version`:
+
+```json
+{
+  "name": "helpp-backend",
+  "version": "1.0.0",
+  "node": "v20.11.0",
+  "env": "development"
+}
+```
