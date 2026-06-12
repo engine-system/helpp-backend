@@ -39,13 +39,17 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
   customSiteTitle: 'Helpp API Docs',
 }));
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
 const { version, name } = require('./package.json');
-app.get('/version', (req, res) => {
-  res.json({ name, version, node: process.version, env: process.env.NODE_ENV || 'development' });
+
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    name,
+    version,
+    node: process.version,
+    env: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
+  });
 });
 
 app.use('/auth', authRoutes);
