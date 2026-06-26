@@ -125,8 +125,8 @@ router.post('/', auth, async (req, res) => {
 
     const data = { userId: req.userId, category, reason, urgency, giveBack };
     if (latitude != null && longitude != null) {
-      data.latitude  = latitude;
-      data.longitude = longitude;
+      data.latitude  = parseFloat(Number(latitude).toFixed(2));
+      data.longitude = parseFloat(Number(longitude).toFixed(2));
     }
 
     const request = await Request.create(data);

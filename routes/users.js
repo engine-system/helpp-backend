@@ -28,8 +28,8 @@ router.patch('/:id', auth, async (req, res) => {
 
     const update = { nickname, cpfSuffix, phoneSuffix, city, neighborhood, profileComplete: true };
     if (latitude != null && longitude != null) {
-      update.latitude = latitude;
-      update.longitude = longitude;
+      update.latitude  = parseFloat(Number(latitude).toFixed(2));
+      update.longitude = parseFloat(Number(longitude).toFixed(2));
     }
     if (avatar !== undefined) {
       update.avatar = avatar;
